@@ -1,3 +1,4 @@
+package DB2;
 import java.io.Serializable;
 import java.util.Hashtable;
 import java.util.Vector;

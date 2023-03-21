@@ -1,3 +1,4 @@
+package DB2;
 
 import java.io.Serializable;
 import java.util.Vector;
@@ -7,7 +8,7 @@ import java.util.Vector;
 public class Page implements Serializable {
 	 static int  pageid =0;
     private static final long serialVersionUID = 1L; // Unique ID for serialization
-    private Vector<tuple> tuples;
+    private Vector<Object> tuples;
     int pagesize = 0 ;
     int maxPageSize = 5;
 
@@ -16,15 +17,15 @@ public class Page implements Serializable {
         pageid++;
     }
 
-    public void addTuple(tuple tuple) {
+    public void addTuple(Object tuple) {
         tuples.add(tuple);
     }
 
-    public void removeTuple(tuple  tuple) {
+    public void removeTuple(Object  tuple) {
         tuples.remove(tuple);
     }
 
-    public Vector<tuple> getTuples() {
+    public Vector<Object> getTuples() {
         return tuples;
     }
 }
