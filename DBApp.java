@@ -18,8 +18,9 @@ import com.sun.security.auth.NTNumericCredential;
 
 public class DBApp {
 
-	Map<String, Object> tables = new HashMap<>();
+	Map<String, Table> tables = new HashMap<>();
 	String[] data = new String[100];
+	boolean flag = false;
 
 	public void init() {
 
@@ -32,14 +33,16 @@ public class DBApp {
 
 			Table table = new Table(strTableName, strClusteringKeyColumn, htblColNameType, htblColNameMin,
 					htblColNameMax);
+			tables.put(strTableName, table);
 			serializeObject(table, "E:\\DB\\db.ser");
+			
 
 			createMetaData(table);
 
 			// Create a directory for the table's pages
 			File tableDirectory = new File("E:\\DB\\" + strTableName + "/");
 			tableDirectory.mkdir();
-			tables.put(strTableName, table);
+			
 		} else {
 			throw new Exception("Table " + strTableName + " already exists.");
 		}
@@ -125,9 +128,20 @@ public class DBApp {
 	}
 
 	public void insertIntoTable(String strTableName, Hashtable<String, Object> htblColNameValue) throws Exception {
-		// Table table =getTable(strTableName);
+		 Table table =getTable(strTableName);
 //		table.getHtblColNameType().containsKey(key)
+		 readCsv(strTableName, htblColNameValue);
 		System.out.println(htblColNameValue.get("id"));
+		if(flag) {
+			if(table.getListPages().size()==0) {
+				System.out.println("entered");
+				Page page = new Page();
+				page.addTuple(htblColNameValue);
+				File file = new File("E:\\DB\\" + strTableName+"\\Page.class");
+				file.createNewFile();
+				serializePage(page, "E:\\DB\\" + strTableName+"\\Page.ser");
+			}
+		}
 
 //		Object[] keys=htblColNameValue.keySet().toArray();
 //		Object[] values = htblColNameValue.values().toArray();
@@ -159,14 +173,16 @@ public class DBApp {
 				
 
 					if (!htblColNameValue.containsKey(data[1])) {
-						
+						return;
 						}
 					
 					else {
 						Object object = htblColNameValue.get(data[1]);
 						if (!object.getClass().getName().equals(data[2])) {
+							return;
 
 						}
+						flag = true;
 						
 						}
 
@@ -192,7 +208,7 @@ public class DBApp {
 		if (tables.containsKey(strTableName)) {
 			return (Table) tables.get(strTableName);
 		} else {
-			throw new Exception();
+			throw new Exception("not found");
 		}
 	}
 
@@ -220,11 +236,13 @@ public class DBApp {
 		htblColNameValue.put("name", new String("Ahmed Noor"));
 		htblColNameValue.put("gpa", new Double(0.95));
 
-		// dbApp.insertIntoTable( "Student" , htblColNameValue );
-		Object num = 1234;
-		System.out.println(num.getClass().getName());
-		// dbApp.createTable( strTableName, "id", htblColNameType
-		// ,htblColNameMin,htblColNameMax);
+	
+		//Object num = 1234;
+		//System.out.println(num.getClass().getName());
+		 dbApp.createTable( strTableName, "id", htblColNameType
+		 ,htblColNameMin,htblColNameMax);
+	 System.out.println(dbApp.tables);
+		dbApp.insertIntoTable( "Student" , htblColNameValue );
 //		dbApp.readCsv("Student");
 //		 for (int i = 0; i < dbApp.data.length; i++) {
 //             System.out.println(dbApp.data[i]);

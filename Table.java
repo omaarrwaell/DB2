@@ -70,6 +70,7 @@ public Table(String strTableName, String strClusteringKeyColumn, Hashtable<Strin
 		this.htblColNameType = htblColNameType;
 		this.htblColNameMin = htblColNameMin;
 		this.htblColNameMax = htblColNameMax;
+		this.listPages=new Vector<>();
 	}
 
 @Override
