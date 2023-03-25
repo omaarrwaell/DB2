@@ -1,4 +1,5 @@
 package DB2;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -14,14 +15,14 @@ import java.util.Hashtable;
 import java.util.Map;
 import java.util.Vector;
 
-import com.sun.security.auth.NTNumericCredential;
+//import com.sun.security.auth.NTNumericCredential;
 
 public class DBApp {
 
 	Map<String, Table> tables = new HashMap<>();
 	String[] data = new String[100];
 	boolean flag = false;
-
+	String PKgetter;
 	public void init() {
 
 	}
@@ -34,14 +35,15 @@ public class DBApp {
 			Table table = new Table(strTableName, strClusteringKeyColumn, htblColNameType, htblColNameMin,
 					htblColNameMax);
 			tables.put(strTableName, table);
-			serializeObject(table, "E:\\DB\\db.ser");
+			File tableDirectory = new File("D:\\DB2\\DATABASEfiles\\" + strTableName + "/");
+			tableDirectory.mkdir();
+			serializeObject(table, "D:\\DB2\\DATABASEfiles\\"+strTableName+"/"+strTableName+ ".ser");
 			
 
 			createMetaData(table);
 
 			// Create a directory for the table's pages
-			File tableDirectory = new File("E:\\DB\\" + strTableName + "/");
-			tableDirectory.mkdir();
+			
 			
 		} else {
 			throw new Exception("Table " + strTableName + " already exists.");
@@ -50,7 +52,7 @@ public class DBApp {
 	}
 
 	public void createMetaData(Table table) throws IOException {
-		File tablecsvFile = new File("E:\\DB\\" + table.getStrTableName() + ".csv");
+		File tablecsvFile = new File("D:\\DB2\\DATABASEfiles\\" + table.getStrTableName() +"/" + table.getStrTableName()+ ".csv");
 		tablecsvFile.createNewFile();
 		String columnName = "TableName, ColumnName, ColumnType, Clustering key, " + "Indexname , Index type , min ,max";
 //		tablecsvFile.canWrite();
@@ -83,13 +85,17 @@ public class DBApp {
 	private void serializeObject(Object obj, String file) throws Exception {
 		try {
 			Table table = (Table) obj;
+				
 			FileOutputStream fileOut = new FileOutputStream(file);
+		
 			ObjectOutputStream objectOut = new ObjectOutputStream(fileOut);
+		
 			objectOut.writeObject(table);
 			objectOut.close();
 			fileOut.close();
 			System.out.println("finished");
 		} catch (IOException e) {
+			System.out.println("in here");
 			throw new Exception("Error serializing object to file " + file);
 		}
 	}
@@ -104,6 +110,7 @@ public class DBApp {
 			fileOut.close();
 			System.out.println("finished");
 		} catch (IOException e) {
+			
 			throw new Exception("Error serializing object to file " + file);
 		}
 	}
@@ -126,6 +133,25 @@ public class DBApp {
 			return;
 		}
 	}
+	
+	private void deserializePage(String filepath) throws Exception {
+		try {
+			Page page;
+			FileInputStream fileIn = new FileInputStream(filepath);
+			ObjectInputStream in = new ObjectInputStream(fileIn);
+			page = (Page) in.readObject();
+			in.close();
+			fileIn.close();
+			
+		} catch (IOException i) {
+			i.printStackTrace();
+			return;
+		} catch (ClassNotFoundException c) {
+			System.out.println("Employee class not found");
+			c.printStackTrace();
+			return;
+		}
+	}
 
 	public void insertIntoTable(String strTableName, Hashtable<String, Object> htblColNameValue) throws Exception {
 		 Table table =getTable(strTableName);
@@ -137,11 +163,34 @@ public class DBApp {
 				System.out.println("entered");
 				Page page = new Page();
 				page.addTuple(htblColNameValue);
-				File file = new File("E:\\DB\\" + strTableName+"\\Page.class");
-				file.createNewFile();
-				serializePage(page, "E:\\DB\\" + strTableName+"\\Page.ser");
+				//File file = new File("D:\\DB2\\DATABASEfiles\\" + strTableName+"\\Page.class");
+				//file.createNewFile();
+				serializePage(page, "D:\\DB2\\DATABASEfiles\\" + strTableName + "\\page"+page.pageid + ".ser");
+			}
+			else {
+				
+				for(int i=0;i<table.listPages.size();i++) {
+					
+					
+					
+				getPK(strTableName);
+				Vector <Page> list= table.getListPages();
+				Page page = list.get(i);
+					int lastid=(int)(list.get(i).getTuples().get(5).get(PKgetter));
+					if (lastid>(int)htblColNameValue.get(PKgetter)){
+						if (page.pagesize<5) {
+							
+						}
+						
+					}
+					
+				}
+				
+				
 			}
 		}
+		
+		
 
 //		Object[] keys=htblColNameValue.keySet().toArray();
 //		Object[] values = htblColNameValue.values().toArray();
@@ -153,11 +202,49 @@ public class DBApp {
 //		}
 
 	}
+	
+	
+	public void getPK (String strTableName) {
+		
+		try {
+		
+		BufferedReader reader = new BufferedReader(new FileReader("D:\\DB2\\DATABASEfiles\\" + strTableName + "\\"+strTableName+".csv"));
+		String line;
+
+		
+		line = reader.readLine();
+		String[] headers = line.split(",");
+        
+	
+		while ((line = reader.readLine()) != null) {
+
+			data = line.split(",");
+			if (data[0].equals(strTableName)) {
+				
+				if (data[3].equals("true")) 
+					PKgetter=data[1];
+					
+				}}
+		
+
+			reader.close();
+		
+	}
+
+		
+		catch (IOException e) {
+		System.out.println("An error occurred while reading the CSV file.");
+		e.printStackTrace();
+	}
+		
+
+		
+	}
 
 	public void readCsv(String strTableName, Hashtable<String, Object> htblColNameValue) {
 		
 		try {
-			BufferedReader reader = new BufferedReader(new FileReader("E:\\DB\\" + strTableName + ".csv"));
+			BufferedReader reader = new BufferedReader(new FileReader("D:\\DB2\\DATABASEfiles\\" + strTableName + "\\"+strTableName+".csv"));
 			String line;
 
 			// Read headers from the CSV file
@@ -241,8 +328,14 @@ public class DBApp {
 		//System.out.println(num.getClass().getName());
 		 dbApp.createTable( strTableName, "id", htblColNameType
 		 ,htblColNameMin,htblColNameMax);
-	 System.out.println(dbApp.tables);
-		dbApp.insertIntoTable( "Student" , htblColNameValue );
+		 
+		dbApp.getPK("Student");
+
+		System.out.print(dbApp.PKgetter);
+	
+		 
+	// System.out.println(dbApp.tables);
+	//	dbApp.insertIntoTable( "Student" , htblColNameValue );
 //		dbApp.readCsv("Student");
 //		 for (int i = 0; i < dbApp.data.length; i++) {
 //             System.out.println(dbApp.data[i]);

@@ -13,6 +13,7 @@ public class Page implements Serializable {
     int pagesize = 0 ;
     int maxPageSize = 5;
 
+
     public Page() {
     	this.tuples= new Vector<>();
         pageid++;
